@@ -1,0 +1,672 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head><meta name="generator" content="Hexo 3.9.0">
+  
+
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5">
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.5.1">
+
+
+    <meta name="description" content="不学无术，以缺德服人:)">
+
+
+
+  <meta name="keywords" content="linux,运维,">
+
+
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/img/favicon.png?v=0.4.5.1">
+
+
+<meta name="description" content="这件事说来有点不可思议，作为管理员我很惭愧。经过这么长时间与来路不明的黑客的斗法，着实让我深刻体会到了无缝不入的黑客手段能有多危险，如果黑客没有盯着你，只是因为你暂时没有被黑的价值，而不是因为他做不到。 因为此前发见过小规模的挖矿木马，当时在一些服务器上发现有名为./htral的进程，占用400%的CPU资源。当时我们重新整理了iptables的规则，对所有的外网访问都做了严格控制，只有指定的IP">
+<meta name="keywords" content="linux,运维">
+<meta property="og:type" content="article">
+<meta property="og:title" content="道高一尺，魔高一丈：服务器挖矿木马追查">
+<meta property="og:url" content="http://www.fatalfault.com/2015/12/28/catching-bitcoin-virus/index.html">
+<meta property="og:site_name" content="Riemann.Gan">
+<meta property="og:description" content="这件事说来有点不可思议，作为管理员我很惭愧。经过这么长时间与来路不明的黑客的斗法，着实让我深刻体会到了无缝不入的黑客手段能有多危险，如果黑客没有盯着你，只是因为你暂时没有被黑的价值，而不是因为他做不到。 因为此前发见过小规模的挖矿木马，当时在一些服务器上发现有名为./htral的进程，占用400%的CPU资源。当时我们重新整理了iptables的规则，对所有的外网访问都做了严格控制，只有指定的IP">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://www.fatalfault.com/img/crontab-modification.png">
+<meta property="og:image" content="http://www.fatalfault.com/2015/12/28/catching-bitcoin-virus/crontab-modified-date.png">
+<meta property="og:updated_time" content="2019-05-01T09:33:35.152Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="道高一尺，魔高一丈：服务器挖矿木马追查">
+<meta name="twitter:description" content="这件事说来有点不可思议，作为管理员我很惭愧。经过这么长时间与来路不明的黑客的斗法，着实让我深刻体会到了无缝不入的黑客手段能有多危险，如果黑客没有盯着你，只是因为你暂时没有被黑的价值，而不是因为他做不到。 因为此前发见过小规模的挖矿木马，当时在一些服务器上发现有名为./htral的进程，占用400%的CPU资源。当时我们重新整理了iptables的规则，对所有的外网访问都做了严格控制，只有指定的IP">
+<meta name="twitter:image" content="http://www.fatalfault.com/img/crontab-modification.png">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'always'
+  };
+</script>
+
+  <title> 道高一尺，魔高一丈：服务器挖矿木马追查 | Riemann.Gan </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh_CN">
+
+  <!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+  
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?66d3f22c203a48a65266b70229331a3a";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+  <div class="container one-column page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-next-logo"></i>
+      </span>
+      <span class="site-title">Riemann.Gan</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu ">
+      
+        
+        <li class="menu-item menu-item-所有文章">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-next-所有文章"></i> <br>
+            所有文章
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-虚拟化">
+          <a href="/tags/virtualization" rel="section">
+            <i class="menu-item-icon icon-next-虚拟化"></i> <br>
+            虚拟化
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-前端">
+          <a href="/tags/frontend" rel="section">
+            <i class="menu-item-icon icon-next-前端"></i> <br>
+            前端
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-服务端">
+          <a href="/tags/server" rel="section">
+            <i class="menu-item-icon icon-next-服务端"></i> <br>
+            服务端
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-关于我">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-next-关于我"></i> <br>
+            关于我
+          </a>
+        </li>
+      
+
+      
+      
+    </ul>
+  
+
+  
+</nav>
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div id="content" class="content"> 
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              道高一尺，魔高一丈：服务器挖矿木马追查
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          Posted on
+          <time itemprop="dateCreated" datetime="2015-12-28T21:24:04+08:00" content="2015-12-28">
+            2015-12-28
+          </time>
+        </span>
+
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/12/28/catching-bitcoin-virus/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/12/28/catching-bitcoin-virus/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>这件事说来有点不可思议，作为管理员我很惭愧。经过这么长时间与来路不明的黑客的斗法，着实让我深刻体会到了无缝不入的黑客手段能有多危险，如果黑客没有盯着你，只是因为你暂时没有被黑的价值，而不是因为他做不到。</p>
+<p>因为此前发见过小规模的挖矿木马，当时在一些服务器上发现有名为<code>./htral</code>的进程，占用400%的CPU资源。当时我们重新整理了iptables的规则，对所有的外网访问都做了严格控制，只有指定的IP才能访问特定的端口。这之后就一直比较太平，没有多少问题反馈，加上自身任务繁忙，对机房的管理比较疏忽，直到最近发现了新的情况。</p>
+<a id="more"></a>
+<p>#东窗事发</p>
+<p>前些天发现机房的温度过高，精窖空调发出了高温警报，查看空调的温度历史，发现晚上12点之后到早上7点之间，机房的温度都会异常得升高。按照常理，到了晚上没什么人做实验，机器的负载应该会低一些才对。由于之前出现过挖矿木马的情况，于是我第一时间就往这方面猜想了。</p>
+<p>我回想起之前有人向我反馈，晚上运行的程序计算很慢，或者服务器上出现了一个<code>[watchdog]</code>进程。由于都是在晚上，而且也不是每次都在特定的服务器上出现，排查比较困难；当时认为<code>[watchdog]</code>进程是系统进程，在执行系统定期任务等（后来反应过来后才发现，这都是木马进程）。联想到此前的这些情况，加上上次遇到这<code>[migration]</code>进程的事件后，我猜意识到出问题了。（<a href="http://fatalfault.com/2015/12/09/bitcome-miner-process-record/）" target="_blank" rel="noopener">http://fatalfault.com/2015/12/09/bitcome-miner-process-record/）</a></p>
+<p>#寻根溯源<br>由于白天都一切正常，晚上回到寝室在服务器上一个个查看。之前的经验告诉我，遍历每台服务器，输出<code>top</code>信息，应该会看到占用大量CPU资源的可疑root进程存在，使用循环脚本<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> &#123;1..10&#125;; <span class="keyword">do</span> <span class="built_in">echo</span> server<span class="variable">$i</span>=======================; ssh server<span class="variable">$i</span> <span class="string">"top -bn1 | head -n 15"</span>; <span class="built_in">echo</span>; <span class="keyword">done</span></span><br></pre></td></tr></table></figure></p>
+<p>输出每台服务器的系统和进程信息，但是出乎意料的是，输出的信息显示系统就是限制的，没有任何占用CPU的进程，样例输出如下：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">top - 22:19:57 up 137 days,  6:49,  1 user,  load average: 13.63, 16.04, 12.41             </span><br><span class="line">Tasks: 738 total,   1 running, 737 sleeping,   0 stopped,   0 zombie                       </span><br><span class="line">Cpu(s):  2.1%us,  4.9%sy,  0.0%ni, 93.0%id,  0.0%wa,  0.0%hi,  0.0%si,  0.0%st             </span><br><span class="line">Mem:  65949776k total, 17388120k used, 48561656k free,   289180k buffers                   </span><br><span class="line">Swap:  8388600k total,        0k used,  8388600k free,  7292560k cached                    </span><br><span class="line"></span><br><span class="line">  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND                       </span><br><span class="line"> 3370 root      20   0  164m 3132 1104 S  5.6  0.0   8089:33 /opt/paratera/paramon/sbin/pcn</span><br><span class="line"> 3734 root      20   0  130m 2476  972 S  3.3  0.0   5023:56 /opt/paratera/paramon/sbin/pcn</span><br><span class="line"> 6252 root      20   0 15612 1788  960 R  1.0  0.0   0:00.16 top -c                        </span><br><span class="line"> 3122 root      39  19     0    0    0 S  0.3  0.0 731:52.46 [kipmi0]                      </span><br><span class="line"> 3437 root      20   0 78784  10m 1292 S  0.3  0.0 492:42.65 /opt/lampp/bin/python /opt/DCA</span><br><span class="line">17187 hadoopcj  20   0 3461m 432m  17m S  0.3  0.7   0:34.85 /home/hadoopcj/java/jdk1.8.0_6</span><br><span class="line">17478 hadoopcj  20   0 3663m 478m  17m S  0.3  0.7   3:53.25 /home/hadoopcj/java/jdk1.8.0_6</span><br><span class="line">    1 root      20   0 21488 1496 1188 S  0.0  0.0   0:02.30 /sbin/init</span><br></pre></td></tr></table></figure></p>
+<p>经验富足的人会发现上面输出信息中的端倪。所以经验不足的我一开始并没有看出什么问题。看到服务器都是空闲的，我想到经前的经历(<a href="http://fatalfault.com/2015/12/09/bitcome-miner-process-record/)，挖矿进程会在识别到用户登录后的若干秒后自动退出进程，但那毕竟有一定的时延，用上面的命令应该可以捕捉到进程信息。我以为扑了个空。第二天去机房查看温度监控，发现前天晚上11点~次日早上7点之间温度依然升高了不少。" target="_blank" rel="noopener">http://fatalfault.com/2015/12/09/bitcome-miner-process-record/)，挖矿进程会在识别到用户登录后的若干秒后自动退出进程，但那毕竟有一定的时延，用上面的命令应该可以捕捉到进程信息。我以为扑了个空。第二天去机房查看温度监控，发现前天晚上11点~次日早上7点之间温度依然升高了不少。</a></p>
+<p>#初现端倪<br>由于没有健全的运维系统，一切都只能动手和动脑人肉检查，一时间我陷入了困境。好在下午的时候有了亮点重要的发现：</p>
+<ul>
+<li>几乎所有服务器上有存在crontab记录异常；</li>
+<li>购买的在线运维服务的技术人员建议我用他们的工具监控；</li>
+</ul>
+<h2 id="crontab异常"><a href="#crontab异常" class="headerlink" title="crontab异常"></a>crontab异常</h2><p>之前使用<code>crontab -l</code>检查服务器的crontab记录，看到的都是正常的。偶尔使用了<code>crontab -e</code>参数，看到了系统下<code>/var/spool/cron/root</code>的真正内容为如下：<br><img src="/img/crontab-modification.png" alt="crontab异常"></p>
+<p>上面的文件内容明显不是一个正常的crontab文件，前两行的内容中有非打印字符。而且因为语法不对，前两行没有被正常解析，导致使用<code>crontab -l</code>看到的结果是第三行的内容，才使得之前都没有发现端倪。在确定了这些内容不是我们自己人添加的后，认定这是攻击者添加的记录。并且之后我有了更多可以佐证这一点的证据：</p>
+<ol>
+<li>执行<code>/usr/bin/systemc</code>文件后，系统上会启动一个进程名为<code>[watchdog]</code>的进程；</li>
+<li>启动<code>[watchdog]</code>进程的时间和杀死该进程的时间与机房空调的温度抖动时间吻合；</li>
+<li>新建一个到该服务的ssh登陆，<code>[watchdog]</code>进程立刻就会结束，行为与前面观察到的一样；</li>
+<li>另外，反复执行<code>/usr/bin/systemc</code>程序或者将系统时间调整到21:58，等系统时间到达22:00后，服务器上出现[watchdog]进程；</li>
+</ol>
+<p>虽然添加了内容，但是这两条记录并没有生效，只是留下了蛛丝马迹。推测攻击者当时是想，在crontab中添加定时任务，在晚上10点和早上7点之间执行木马程序。但是失误导致crontab文件中有非打印字符。之后攻击者采用了其他方案。</p>
+<p>检查<code>/var/spool/cron/root</code>文件最后被修改的时间：<br><img src="crontab-modified-date.png" alt="crontab修改时间"></p>
+<p>并且推测，上面三行记录，前两行的添加时间是要早于最后一行的。因为初始的时候才会显示，系统中没有任何crontab记录的时候，才会提示没有任何root用户的记录。</p>
+<p>##实时监控<br>服务器上的系统时间比我们PC上的时间晚20分钟，大约在晚上21:40的时候，我开始在监控软件上看到服务器上陆续出现了很多[watchdog]进程，特征也与前面观察到的相同。借助监控工具，终于直接观察到了木马进程的真实面目和感染规模。</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/linux/" rel="tag">#linux</a>
+          
+            <a href="/tags/运维/" rel="tag">#运维</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/01/06/checkbox-bug/" rel="prev">jQuery操作checkbox的bug</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/12/09/bitcome-miner-process-record/" rel="next">服务器挖矿进程记录</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+ </div>
+
+        
+
+        
+          <div class="comments" id="comments">
+            
+              <div class="ds-thread" data-thread-key="2015/12/28/catching-bitcoin-virus/" data-title="道高一尺，魔高一丈：服务器挖矿木马追查" data-url="http://www.fatalfault.com/2015/12/28/catching-bitcoin-virus/">
+              </div>
+            
+          </div>
+        
+      </div>
+
+      
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table Of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/img/avatar.jpg" alt="Riemann.Gan" itemprop="image">
+          <p class="site-author-name" itemprop="name">Riemann.Gan</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">不学无术，以缺德服人:)</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/">
+              <span class="site-state-item-count">24</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            
+              <span class="site-state-item-count">3</span>
+              <span class="site-state-item-name">categories</span>
+              
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            
+              <span class="site-state-item-count">13</span>
+              <span class="site-state-item-name">tags</span>
+              
+          </div>
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+            <p class="site-author-name">友情链接</p>
+            
+              <span class="links-of-author-item">
+              <a href="http://zzwei-.github.io/" target="_blank">小伟的博客</a>
+              </span>
+            
+              <span class="links-of-author-item">
+              <a href="http://www.cnblogs.com/zx247549135/" target="_blank">大雄的博客</a>
+              </span>
+            
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#crontab异常"><span class="nav-number">1.</span> <span class="nav-text">crontab异常</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner"> <div class="copyright">
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="icon-next-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Riemann.Gan</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="http://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+ </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+  </div>
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"fatalfault"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.5.1"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.5.1"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.5.1" id="motion.global"></script>
+
+
+
+
+  <script type="text/javascript" src="/js/nav-toggle.js?v=0.4.5.1"></script>
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.5.1" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+  <script type="text/javascript">
+    $(document).ready(function () {
+      if (CONFIG.sidebar === 'always') {
+        displaySidebar();
+      }
+      if (isMobile()) {
+        FastClick.attach(document.body);
+      }
+    });
+  </script>
+
+  
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/lazyload.js"></script>
+  <script type="text/javascript">
+    $(function () {
+      $("#posts").find('img').lazyload({
+        placeholder: "/images/loading.gif",
+        effect: "fadeIn"
+      });
+    });
+  </script>
+</body>
+</html>

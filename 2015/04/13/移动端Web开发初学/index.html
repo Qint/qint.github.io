@@ -1,0 +1,688 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head><meta name="generator" content="Hexo 3.9.0">
+  
+
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5">
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.5.1">
+
+
+    <meta name="description" content="不学无术，以缺德服人:)">
+
+
+
+  <meta name="keywords" content="frontend,">
+
+
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/img/favicon.png?v=0.4.5.1">
+
+
+<meta name="description" content="Outline:  viewport media query 跨浏览器开发 根据User Agent String探测设备类型">
+<meta name="keywords" content="frontend">
+<meta property="og:type" content="article">
+<meta property="og:title" content="移动Web开发:viewport">
+<meta property="og:url" content="http://www.fatalfault.com/2015/04/13/移动端Web开发初学/index.html">
+<meta property="og:site_name" content="Riemann.Gan">
+<meta property="og:description" content="Outline:  viewport media query 跨浏览器开发 根据User Agent String探测设备类型">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://www.fatalfault.com/img/without-viewport.png">
+<meta property="og:image" content="http://www.fatalfault.com/img/with-viewport.png">
+<meta property="og:updated_time" content="2019-05-01T09:33:35.166Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="移动Web开发:viewport">
+<meta name="twitter:description" content="Outline:  viewport media query 跨浏览器开发 根据User Agent String探测设备类型">
+<meta name="twitter:image" content="http://www.fatalfault.com/img/without-viewport.png">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'always'
+  };
+</script>
+
+  <title> 移动Web开发:viewport | Riemann.Gan </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh_CN">
+
+  <!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+  
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?66d3f22c203a48a65266b70229331a3a";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+  <div class="container one-column page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-next-logo"></i>
+      </span>
+      <span class="site-title">Riemann.Gan</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu ">
+      
+        
+        <li class="menu-item menu-item-所有文章">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-next-所有文章"></i> <br>
+            所有文章
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-虚拟化">
+          <a href="/tags/virtualization" rel="section">
+            <i class="menu-item-icon icon-next-虚拟化"></i> <br>
+            虚拟化
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-前端">
+          <a href="/tags/frontend" rel="section">
+            <i class="menu-item-icon icon-next-前端"></i> <br>
+            前端
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-服务端">
+          <a href="/tags/server" rel="section">
+            <i class="menu-item-icon icon-next-服务端"></i> <br>
+            服务端
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-关于我">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-next-关于我"></i> <br>
+            关于我
+          </a>
+        </li>
+      
+
+      
+      
+    </ul>
+  
+
+  
+</nav>
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div id="content" class="content"> 
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              移动Web开发:viewport
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          Posted on
+          <time itemprop="dateCreated" datetime="2015-04-13T17:23:30+08:00" content="2015-04-13">
+            2015-04-13
+          </time>
+        </span>
+
+        
+          <span class="post-category">
+            &nbsp; | &nbsp; In
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                <a href="/categories/frontend/" itemprop="url" rel="index">
+                  <span itemprop="name">frontend</span>
+                </a>
+              </span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/04/13/移动端Web开发初学/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/04/13/移动端Web开发初学/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p><strong>Outline:</strong></p>
+<ol>
+<li>viewport</li>
+<li>media query</li>
+<li>跨浏览器开发</li>
+<li>根据User Agent String探测设备类型</li>
+</ol>
+<a id="more"></a>
+<p>最近和移动端开发的同学商量，改变项目的技术方案：为了加快开发速度，<code>Android</code>端采用Hybrid开发模式。在APP中潜入WebView，部分页面采用纯Web前端技术来开发。作为二流的前端开发者，我开始学习移动端的Web开发技术，接触到了之前在PC端未使用过的一些技术。</p>
+<p>计划将来在Android和iOS端使用统一的布局，有一点很好的是，避开了IE和很多二流PC浏览器对<code>ECMAScript</code>规范的不支持。可以肆意使用HTML5中的特性。下面记录下学到的移动端Web开发中常用的一些技术。</p>
+<p><strong>参考文章：</strong><a href="https://developer.mozilla.org/en-US/docs/Web/Guide/Mobile" target="_blank" rel="noopener">MDN: Mobile Web Development</a>及其中的链接</p>
+<h1 id="viewport"><a href="#viewport" class="headerlink" title="viewport"></a>viewport</h1><p><strong>参考资料:</strong><br> <a href="https://developer.mozilla.org/zh-CN/docs/Mobile/Viewport_meta_tag" target="_blank" rel="noopener">MDN-在移动浏览器中使用viewport元标签控制布局</a>、 <a href="http://weizhifeng.net/viewports.html" target="_blank" rel="noopener">两个viewport的故事</a></p>
+<p>移动端的设备屏幕尺寸小而且十分不一致，为了良好的显示体验，viewport规定移动端浏览器在多大的范围内渲染页面。</p>
+<blockquote>
+<p>Mobile Firefox (Fennec) 1.1 增强了对<meta name="viewport"> 标签的支持。 此前版本的Fennec支持width、height及initial-scale这些viewport属性，然而对于针对iPhone及Android浏览器设计的站点的支持存在问题。现在我们和Mobile Safari支持同样的属性，并且我们让Fennec在尺寸及分辨率各异的屏幕上渲染移动站点时更具一致性。            ——MDN</p>
+</blockquote>
+<p>移动端浏览器在一个通常比屏幕更宽的虚拟“窗口”中渲染页面，从而避免将所有页面内容缩进一个小屏幕里面，用户可以通过平移和缩放页面来浏览内容，从而避免打乱页面原来的内容。<strong>这个虚拟窗口就是viewport。</strong></p>
+<p>如果不规定viewport值，手机浏览器一般默认使用980px作为页面渲染的宽度。</p>
+<h2 id="viewport用法"><a href="#viewport用法" class="headerlink" title="viewport用法"></a>viewport用法</h2><p>随着移动终端的普及，针对移动端的Web优化越来越受重视。一个典型的针对移动端进行优化的站点一般含有类似如下的代码：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">"viewport"</span> <span class="attr">content</span>=<span class="string">"width=device-width, initial-scala=1, maximun-scala=1"</span> /&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>这段代码的含义是，使用整个设备的宽度作为<strong>虚拟窗口</strong>的宽度进行页面渲染。同时限定页面的初始缩放比例为1，最大也为1。</p>
+<p><strong>viewport的其他用法：</strong><br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/* 禁用用户缩放页面 */</span><br><span class="line"><span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">"viewport"</span> <span class="attr">content</span>=<span class="string">"width=device-width, user-scalable=no"</span> /&gt;</span></span><br></pre></td></tr></table></figure></p>
+<h2 id="viewport效果"><a href="#viewport效果" class="headerlink" title="viewport效果"></a>viewport效果</h2><p>一个<code>viewport</code>的使用效果如下：<br><br>使用前：<br><img src="/img/without-viewport.png" alt="使用viewport前"></p>
+<p>使用后：<br><img src="/img/with-viewport.png" alt="使用viewport后"></p>
+<p><code>width</code>属性也可以设置为一个固定的像素值，如：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">"viewport"</span> <span class="attr">content</span>=<span class="string">"width=360, initial-scala=1"</span> /&gt;</span></span><br></pre></td></tr></table></figure></p>
+<h2 id="viewport要点"><a href="#viewport要点" class="headerlink" title="viewport要点"></a>viewport要点</h2><ol>
+<li>很多网站将viewport设为<code>width=320, initial-scala=1</code>来准确地适应iPhone在竖屏状态下的显示，但这回导致比如横屏模式下无法正常显示的问题。为了修正这个问题，在必要时viewport宽度将被扩展到适当的尺寸来填满屏幕。这一点对于iPad这样的设备尤其有用。</li>
+<li>对于设置了初始或者最大缩放（initial-scala或者maximun-scala）的页面，width值实际上被用为viewport的最小宽度。</li>
+</ol>
+<h1 id="Media-Query"><a href="#Media-Query" class="headerlink" title="Media Query"></a>Media Query</h1><h1 id="跨浏览器开发"><a href="#跨浏览器开发" class="headerlink" title="跨浏览器开发"></a>跨浏览器开发</h1><p>#　根据User Agent String探测设备类型</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/frontend/" rel="tag">#frontend</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/04/14/移动Web要点/" rel="prev">与移动Web相关的技巧</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/04/13/kvm系列(1)-KVM虚拟化技术介绍/" rel="next">kvm系列(1):kvm虚拟化技术介绍</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+ </div>
+
+        
+
+        
+          <div class="comments" id="comments">
+            
+              <div class="ds-thread" data-thread-key="2015/04/13/移动端Web开发初学/" data-title="移动Web开发:viewport" data-url="http://www.fatalfault.com/2015/04/13/移动端Web开发初学/">
+              </div>
+            
+          </div>
+        
+      </div>
+
+      
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table Of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/img/avatar.jpg" alt="Riemann.Gan" itemprop="image">
+          <p class="site-author-name" itemprop="name">Riemann.Gan</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">不学无术，以缺德服人:)</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/">
+              <span class="site-state-item-count">24</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            
+              <span class="site-state-item-count">3</span>
+              <span class="site-state-item-name">categories</span>
+              
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            
+              <span class="site-state-item-count">13</span>
+              <span class="site-state-item-name">tags</span>
+              
+          </div>
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+            <p class="site-author-name">友情链接</p>
+            
+              <span class="links-of-author-item">
+              <a href="http://zzwei-.github.io/" target="_blank">小伟的博客</a>
+              </span>
+            
+              <span class="links-of-author-item">
+              <a href="http://www.cnblogs.com/zx247549135/" target="_blank">大雄的博客</a>
+              </span>
+            
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#viewport"><span class="nav-number">1.</span> <span class="nav-text">viewport</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#viewport用法"><span class="nav-number">1.1.</span> <span class="nav-text">viewport用法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#viewport效果"><span class="nav-number">1.2.</span> <span class="nav-text">viewport效果</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#viewport要点"><span class="nav-number">1.3.</span> <span class="nav-text">viewport要点</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Media-Query"><span class="nav-number">2.</span> <span class="nav-text">Media Query</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#跨浏览器开发"><span class="nav-number">3.</span> <span class="nav-text">跨浏览器开发</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner"> <div class="copyright">
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="icon-next-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Riemann.Gan</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="http://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+ </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+  </div>
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"fatalfault"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.5.1"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.5.1"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.5.1" id="motion.global"></script>
+
+
+
+
+  <script type="text/javascript" src="/js/nav-toggle.js?v=0.4.5.1"></script>
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.5.1" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+  <script type="text/javascript">
+    $(document).ready(function () {
+      if (CONFIG.sidebar === 'always') {
+        displaySidebar();
+      }
+      if (isMobile()) {
+        FastClick.attach(document.body);
+      }
+    });
+  </script>
+
+  
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/lazyload.js"></script>
+  <script type="text/javascript">
+    $(function () {
+      $("#posts").find('img').lazyload({
+        placeholder: "/images/loading.gif",
+        effect: "fadeIn"
+      });
+    });
+  </script>
+</body>
+</html>

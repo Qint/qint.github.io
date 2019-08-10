@@ -1,0 +1,673 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head><meta name="generator" content="Hexo 3.9.0">
+  
+
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5">
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.5.1">
+
+
+    <meta name="description" content="不学无术，以缺德服人:)">
+
+
+
+  <meta name="keywords" content="virtualization,">
+
+
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/img/favicon.png?v=0.4.5.1">
+
+
+<meta name="description" content="本文记录Xen的安装过程和虚拟机的创建、配置过程，记录过程中遇到的问题，和解决办法。">
+<meta name="keywords" content="virtualization">
+<meta property="og:type" content="article">
+<meta property="og:title" content="安装Xen与创建虚拟机">
+<meta property="og:url" content="http://www.fatalfault.com/2015/06/30/install-xen-virtual-machine/index.html">
+<meta property="og:site_name" content="Riemann.Gan">
+<meta property="og:description" content="本文记录Xen的安装过程和虚拟机的创建、配置过程，记录过程中遇到的问题，和解决办法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://www.fatalfault.com/img/xen-files.jpg">
+<meta property="og:updated_time" content="2019-05-01T09:33:35.155Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="安装Xen与创建虚拟机">
+<meta name="twitter:description" content="本文记录Xen的安装过程和虚拟机的创建、配置过程，记录过程中遇到的问题，和解决办法。">
+<meta name="twitter:image" content="http://www.fatalfault.com/img/xen-files.jpg">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'always'
+  };
+</script>
+
+  <title> 安装Xen与创建虚拟机 | Riemann.Gan </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh_CN">
+
+  <!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+  
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?66d3f22c203a48a65266b70229331a3a";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+  <div class="container one-column page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-next-logo"></i>
+      </span>
+      <span class="site-title">Riemann.Gan</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu ">
+      
+        
+        <li class="menu-item menu-item-所有文章">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-next-所有文章"></i> <br>
+            所有文章
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-虚拟化">
+          <a href="/tags/virtualization" rel="section">
+            <i class="menu-item-icon icon-next-虚拟化"></i> <br>
+            虚拟化
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-前端">
+          <a href="/tags/frontend" rel="section">
+            <i class="menu-item-icon icon-next-前端"></i> <br>
+            前端
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-服务端">
+          <a href="/tags/server" rel="section">
+            <i class="menu-item-icon icon-next-服务端"></i> <br>
+            服务端
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-关于我">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-next-关于我"></i> <br>
+            关于我
+          </a>
+        </li>
+      
+
+      
+      
+    </ul>
+  
+
+  
+</nav>
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div id="content" class="content"> 
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              安装Xen与创建虚拟机
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          Posted on
+          <time itemprop="dateCreated" datetime="2015-06-30T14:19:38+08:00" content="2015-06-30">
+            2015-06-30
+          </time>
+        </span>
+
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/06/30/install-xen-virtual-machine/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/06/30/install-xen-virtual-machine/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>本文记录Xen的安装过程和虚拟机的创建、配置过程，记录过程中遇到的问题，和解决办法。</p>
+<a id="more"></a>
+<h1 id="安装xen"><a href="#安装xen" class="headerlink" title="安装xen"></a>安装xen</h1><h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><p>此处使用Xen-4.2.0和linux-3.2.30版本的内核。首先在官方网站上下载源码。<br>linux-3.2.30源码： <a href="https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.30.tar.gz" target="_blank" rel="noopener">https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.30.tar.gz</a><br>xen-4.2.0源码：<a href="http://www.xenproject.org/downloads/xen-archives/supported-xen-42-series/xen-420.html" target="_blank" rel="noopener">http://www.xenproject.org/downloads/xen-archives/supported-xen-42-series/xen-420.html</a></p>
+<p>创建一个工作目录，此处为<code>/home/ganqt/xen-4.2</code>。使用wget将源码文件下载到目录下。然后解压。<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 下载linux3.2.30源码</span></span><br><span class="line">wget https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.30.tar.gz</span><br><span class="line"><span class="comment"># 下载xen4.2.0源码</span></span><br><span class="line">wget http://bits.xensource.com/oss-xen/release/4.2.0/xen-4.2.0.tar.gz</span><br></pre></td></tr></table></figure></p>
+<h2 id="安装Dom0的内核"><a href="#安装Dom0的内核" class="headerlink" title="安装Dom0的内核"></a>安装Dom0的内核</h2><p>Dom0的内核就是一个普通的linux内核，此处使用上面下载的linux3.2.30。先编译安装内核。<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 解压linux源码</span></span><br><span class="line">tar -zxvf linux-3.2.30.tar.gz</span><br><span class="line"><span class="comment"># 安装</span></span><br><span class="line"><span class="built_in">cd</span> linux-3.2.30</span><br><span class="line">make menuconfig</span><br><span class="line">make all -j16</span><br><span class="line">make modules_install</span><br><span class="line">make install</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p><strong>Notice:</strong> 此处存在一个问题，<code>make menuconfigure</code>之后，生成的.config文件中，一共只有2000+行配置内容，而一个正常的./config文件一般是5000+行内容。使用这个配置编译后，产生的内核模块只有4个(使用<code>make modules_install</code>可以看到)。这回导致重新安装了内核之后，很多功能无法使用。<br>导致这个问题的原因是，执行<code>make menuconfig</code>的时候，配置程序会基于当前系统的配置情况生成默认的配置，而新的内核是基于xen的内核进行编译的，这可能导致配置程序无法识别当前的系统有哪些模块选项，从而使得配置程序没有选中任何模块选项。<br>解决办法有三种：1.使用现有的.config文件进行配置和编译；2.选择一个没有安装xen的正常内核启动，然后再从上面配置和编译；3.在一台没有安装xen的正常linux上先执行<code>make menuconfig</code>操作，再将.config文件拷贝到当前源码目录下进行编译。<br>此处我的解决办法是：1. 在一台linux-2.6.26版本的机器上先执行<code>make menuconfig</code>操作，可以什么都不修改，直接退出保存；2.将.config文件scp拷贝到当前的源码目录来；3.执行<code>make oldconfig</code>命令，对输出的选项全部选默认值；4.执行<code>make menuconfig</code>命令，选中自己想要编译进内核的模块；<br>然后再继续上面的编译和安装操作，即完成。</p>
+</blockquote>
+<p>安装完成后，将会在/etc/grub.conf中新增一个启动项，留待有用。</p>
+<h2 id="编译安装xen"><a href="#编译安装xen" class="headerlink" title="编译安装xen"></a>编译安装xen</h2><p>xen-4.2.0的安装过程参照了此处：<a href="https://www.rsreese.com/installing-xen-on-centos-6-from-source/" target="_blank" rel="noopener">https://www.rsreese.com/installing-xen-on-centos-6-from-source/</a> 。<br>过程如下：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在configure过程中可能会提示一些依赖包没有安装，需要先安装</span></span><br><span class="line"></span><br><span class="line">yum -y install python-devel dev86 iasl yajl-devel uuid-devel libuuid-devel libaio-devel SDL-devel pciutils-devel texinfo</span><br><span class="line"></span><br><span class="line"><span class="built_in">cd</span> ./xen-4.2.0</span><br><span class="line">./configure  --libdir=/lib64</span><br><span class="line">make xen -j16 &amp;&amp; make tools -j16 &amp;&amp; make stubdom -j16</span><br><span class="line">make install xen &amp;&amp; make install xen-tools &amp;&amp; make install stubdom</span><br></pre></td></tr></table></figure></p>
+<p>这些操作会在/boot目录下生成xen-4.2.0文件，和几个软连接。如图：<br><img src="/img/xen-files.jpg" alt="xen编译结果"></p>
+<h2 id="添加启动项"><a href="#添加启动项" class="headerlink" title="添加启动项"></a>添加启动项</h2><p>现在需要利用前面编译好的linux内核，和安装的xen，添加一个启动项，使得系统启动后进入xen虚拟化模式。<br>将<code>/etc/grub.conf</code>文件中前面编译安装新内核产生的启动项复制一份，然后修改成如下的样子：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">default=0</span><br><span class="line">timeout=5</span><br><span class="line">splashimage=(hd0,0)/boot/grub/splash.xpm.gz</span><br><span class="line"></span><br><span class="line">title CentOS (3.2.30-Xen-4.2.0)</span><br><span class="line">     root (hd0,0)</span><br><span class="line">     kernel /boot/xen-4.2.0.gz dummy=dummy dom0_mem=2048M</span><br><span class="line">     module /boot/vmlinuz-3.2.30 ro root=UUID=316e07dc-bc9e-4003-bb49-7a4a76f690a9 rd_NO    _LUKS rd_NO_LVM LANG=en_US.UTF-8 rd_NO_MD quiet SYSFONT=latarcyrheb-sun16 rhgb crashkernel=    128M  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM</span><br><span class="line">     module /boot/initramfs-3.2.30.img</span><br><span class="line"></span><br><span class="line">title CentOS (3.2.30-kvm)</span><br><span class="line">     root (hd0,0)</span><br><span class="line">     kernel /boot/vmlinuz-3.2.30-kvm ro root=UUID=316e07dc-bc9e-4003-bb49-7a4a76f690a9 r    d_NO_LUKS rd_NO_LVM LANG=en_US.UTF-8 rd_NO_MD quiet SYSFONT=latarcyrheb-sun16 rhgb crashker    nel=128M  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM</span><br><span class="line">     initrd /boot/initramfs-3.2.30-kvm.img</span><br></pre></td></tr></table></figure></p>
+<p>修改并保存后，重启系统，如果顺利，将自动进入xen虚拟化模式的linux。</p>
+<h1 id="创建虚拟机"><a href="#创建虚拟机" class="headerlink" title="创建虚拟机"></a>创建虚拟机</h1><p>xen可以使用virt-manager虚拟机管理器安装虚拟机，但此处直接创建一个镜像，从宿主机拷贝必要的文件后， 直接从创建的镜像启动。具体步骤如下：</p>
+<h2 id="创建镜像文件"><a href="#创建镜像文件" class="headerlink" title="创建镜像文件"></a>创建镜像文件</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /home/ganqt</span><br><span class="line">mkdir img</span><br><span class="line"><span class="built_in">cd</span> img</span><br><span class="line">touch node1.vmdisk</span><br><span class="line">dd <span class="keyword">if</span>=/dev/zero of=node1.vmdisk bs=1M seek=20000 count=1</span><br><span class="line"><span class="comment"># 格式化虚拟磁盘</span></span><br><span class="line">mkfs.ext3 node1.vmdisk</span><br><span class="line"><span class="comment"># 挂载虚拟磁盘</span></span><br><span class="line">mount -o loop node1.vmdisk /mnt</span><br><span class="line"><span class="comment"># 拷贝必须的系统文件，这个过程可能有点耗时</span></span><br><span class="line">cp -ax /&#123;root,dev,var,etc,usr,bin,sbin,lib,boot&#125; /mnt</span><br><span class="line"><span class="comment"># 拷贝/lib64目录</span></span><br><span class="line">cp -rf /lib64 /mnt/lib64</span><br><span class="line"><span class="built_in">echo</span> <span class="string">"/dev/xvda1   /     ext3    defaults        1 1"</span> &gt; /mnt/etc/fstab</span><br><span class="line"><span class="comment"># 创建/sys，/opt目录和/proc目录，否则可能无法启动系统</span></span><br><span class="line">mkdir /mnt/&#123;sys,proc,opt&#125;</span><br><span class="line"><span class="comment"># 卸载虚拟磁盘</span></span><br><span class="line">umount /mnt</span><br></pre></td></tr></table></figure>
+<h2 id="编写配置文件"><a href="#编写配置文件" class="headerlink" title="编写配置文件"></a>编写配置文件</h2><p>在相同目录下创建配置文件<code>node1.cfg</code>，内容如下：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">kernel = <span class="string">"/boot/vmlinuz-3.2.30-kvm"</span></span><br><span class="line">ramdisk = <span class="string">"/boot/initramfs-3.2.30-kvm.img"</span></span><br><span class="line">memory = 2048</span><br><span class="line">name = <span class="string">"node1"</span></span><br><span class="line">vcpus = 4</span><br><span class="line">ip = <span class="string">"192.168.226.220"</span></span><br><span class="line">netmask = <span class="string">"255.255.255.0"</span></span><br><span class="line">gateway = <span class="string">"192.168.226.218"</span></span><br><span class="line">vif = [ <span class="string">''</span> ]</span><br><span class="line">disk = [ <span class="string">'file:/home/ganqt/img/node1.vmdisk,xvda1,w'</span> ]</span><br><span class="line">root = <span class="string">"/dev/xvda1 ro"</span></span><br><span class="line">extra = <span class="string">"4 console=hvc0"</span></span><br></pre></td></tr></table></figure></p>
+<p>上面的配置文件中，指定了使用<code>/boot/vmlinuz-3.2.30-kvm</code>位置的内核，这个就是上面编译安装的内核。使用<code>/home/ganqt/img/node1.vmdisk</code>指定的虚拟磁盘镜像文件启动系统。</p>
+<h2 id="启动虚拟机"><a href="#启动虚拟机" class="headerlink" title="启动虚拟机"></a>启动虚拟机</h2><p>上面安装完xen并重启进入xen虚拟化模式后，可以使用xen相关的命令测试是否正常；<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">xm --<span class="built_in">help</span>   <span class="comment">#查看命令使用帮助</span></span><br><span class="line">xm list     <span class="comment"># 查看虚拟机列表</span></span><br><span class="line">xm info     <span class="comment"># 查看</span></span><br></pre></td></tr></table></figure></p>
+<p>如果xen相关命令无法使用，提出错误，请参考这篇博客：<a href="http://www.oserror.com/usage/204.html" target="_blank" rel="noopener">http://www.oserror.com/usage/204.html</a><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># 驱动虚拟机的命令为</span><br><span class="line">xm create -c node1.cfg</span><br></pre></td></tr></table></figure></p>
+<h2 id="一些问题"><a href="#一些问题" class="headerlink" title="一些问题"></a>一些问题</h2><ol>
+<li>启动虚拟机后，其实找不到<code>root = &quot;/dev/xvda1&quot;设备</code>，大概的错误提示如下：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">dracut: dracut-004-303.el6</span><br><span class="line">udev: starting version 147</span><br><span class="line">dracut: Starting plymouth daemon</span><br><span class="line">dracut Warning: No root device &quot;block:/dev/xvda1&quot; found</span><br><span class="line">dracut Warning: Boot has failed. To debug this issue add &quot;rdshell&quot; to the kernel command line.</span><br><span class="line">dracut Warning: Signal caught!</span><br><span class="line">dracut Warning: Boot has failed. To debug this issue add &quot;rdshell&quot; to the kernel command line.</span><br><span class="line">Kernel panic - not syncing: Attempted to kill init!</span><br><span class="line">Pid: 1, comm: init Not tainted 2.6.32-358.2.1.el6.x86_64 0000001</span><br><span class="line">Call Trace:</span><br><span class="line"> [&lt;ffffffff8150d248&gt;] ? panic+0xa7/0x16f</span><br><span class="line"> [&lt;ffffffff81073ae2&gt;] ? do_exit+0x862/0x870</span><br><span class="line"> [&lt;ffffffff81182965&gt;] ? fput+0x25/0x30</span><br><span class="line"> [&lt;ffffffff81073b48&gt;] ? do_group_exit+0x58/0xd0</span><br><span class="line"> [&lt;ffffffff81073bd7&gt;] ? sys_exit_group+0x17/0x20</span><br><span class="line"> [&lt;ffffffff8100b072&gt;] ? system_call_fastpath+0x16/0x1b</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>搜了一圈后，在<a href="http://serverfault.com/questions/491630/centos-6-xen-guest-fails-to-boot-after-yum-update-kernel" target="_blank" rel="noopener">这篇博客</a>里找到了解决办法，解决办法是如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># mkinitrd -f -v --preload xenblk /boot/initramfswithxenblk.img $(uname -r)</span><br><span class="line">mkinitrd -f -v --preload xenblk /boot/initramfswithxenblk.img 3.2.30-kvm</span><br></pre></td></tr></table></figure></p>
+<ol start="2">
+<li>上述问题解决了，但是接着提示了一个Selinux的问题，问题提示如下：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">dracut Warning: Initial SELinux policy load failed.</span><br><span class="line">dracut: FATAL: Initial SELinux policy load failed. Machine in enforcing mode. To disable selinux, add selinux=0 to the kernel command line.</span><br><span class="line">dracut: Refusing to continue</span><br><span class="line">dracut Warning: Signal caught!</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>这是selinux的相关问题导致的。解决办法如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mount -o loop ./node1.vmdisk /mnt</span><br><span class="line">vim /mtn/etc/selinux/config</span><br></pre></td></tr></table></figure></p>
+<p>将<code>SELINUX=xxx</code>一样改成<code>SELINUX=0</code><br>然后<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">umount /mnt</span><br><span class="line">xm create -c node1.cfg</span><br></pre></td></tr></table></figure></p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/virtualization/" rel="tag">#virtualization</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/07/01/config-net-bridge-in-xen/" rel="prev">在xen中配置网桥</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/06/23/install-kvm-virtual-machine/" rel="next">KVM下创建虚拟机</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+ </div>
+
+        
+
+        
+          <div class="comments" id="comments">
+            
+              <div class="ds-thread" data-thread-key="2015/06/30/install-xen-virtual-machine/" data-title="安装Xen与创建虚拟机" data-url="http://www.fatalfault.com/2015/06/30/install-xen-virtual-machine/">
+              </div>
+            
+          </div>
+        
+      </div>
+
+      
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table Of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/img/avatar.jpg" alt="Riemann.Gan" itemprop="image">
+          <p class="site-author-name" itemprop="name">Riemann.Gan</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">不学无术，以缺德服人:)</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/">
+              <span class="site-state-item-count">24</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            
+              <span class="site-state-item-count">3</span>
+              <span class="site-state-item-name">categories</span>
+              
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            
+              <span class="site-state-item-count">13</span>
+              <span class="site-state-item-name">tags</span>
+              
+          </div>
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+            <p class="site-author-name">友情链接</p>
+            
+              <span class="links-of-author-item">
+              <a href="http://zzwei-.github.io/" target="_blank">小伟的博客</a>
+              </span>
+            
+              <span class="links-of-author-item">
+              <a href="http://www.cnblogs.com/zx247549135/" target="_blank">大雄的博客</a>
+              </span>
+            
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#安装xen"><span class="nav-number">1.</span> <span class="nav-text">安装xen</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#准备工作"><span class="nav-number">1.1.</span> <span class="nav-text">准备工作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#安装Dom0的内核"><span class="nav-number">1.2.</span> <span class="nav-text">安装Dom0的内核</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#编译安装xen"><span class="nav-number">1.3.</span> <span class="nav-text">编译安装xen</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#添加启动项"><span class="nav-number">1.4.</span> <span class="nav-text">添加启动项</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#创建虚拟机"><span class="nav-number">2.</span> <span class="nav-text">创建虚拟机</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#创建镜像文件"><span class="nav-number">2.1.</span> <span class="nav-text">创建镜像文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#编写配置文件"><span class="nav-number">2.2.</span> <span class="nav-text">编写配置文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#启动虚拟机"><span class="nav-number">2.3.</span> <span class="nav-text">启动虚拟机</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一些问题"><span class="nav-number">2.4.</span> <span class="nav-text">一些问题</span></a></li></ol></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner"> <div class="copyright">
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="icon-next-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Riemann.Gan</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="http://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+ </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+  </div>
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"fatalfault"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.5.1"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.5.1"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.5.1" id="motion.global"></script>
+
+
+
+
+  <script type="text/javascript" src="/js/nav-toggle.js?v=0.4.5.1"></script>
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.5.1" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+  <script type="text/javascript">
+    $(document).ready(function () {
+      if (CONFIG.sidebar === 'always') {
+        displaySidebar();
+      }
+      if (isMobile()) {
+        FastClick.attach(document.body);
+      }
+    });
+  </script>
+
+  
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/lazyload.js"></script>
+  <script type="text/javascript">
+    $(function () {
+      $("#posts").find('img').lazyload({
+        placeholder: "/images/loading.gif",
+        effect: "fadeIn"
+      });
+    });
+  </script>
+</body>
+</html>

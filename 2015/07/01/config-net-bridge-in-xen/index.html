@@ -1,0 +1,659 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head><meta name="generator" content="Hexo 3.9.0">
+  
+
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5">
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.5.1">
+
+
+    <meta name="description" content="不学无术，以缺德服人:)">
+
+
+
+  <meta name="keywords" content="virtualization,">
+
+
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/img/favicon.png?v=0.4.5.1">
+
+
+<meta name="description" content="本文记录如何使用网桥，将xen的虚拟机与物理机联通起来。">
+<meta name="keywords" content="virtualization">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在xen中配置网桥">
+<meta property="og:url" content="http://www.fatalfault.com/2015/07/01/config-net-bridge-in-xen/index.html">
+<meta property="og:site_name" content="Riemann.Gan">
+<meta property="og:description" content="本文记录如何使用网桥，将xen的虚拟机与物理机联通起来。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://www.fatalfault.com/img/xen-br0.jpg">
+<meta property="og:updated_time" content="2019-05-01T09:33:35.154Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="在xen中配置网桥">
+<meta name="twitter:description" content="本文记录如何使用网桥，将xen的虚拟机与物理机联通起来。">
+<meta name="twitter:image" content="http://www.fatalfault.com/img/xen-br0.jpg">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'always'
+  };
+</script>
+
+  <title> 在xen中配置网桥 | Riemann.Gan </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh_CN">
+
+  <!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+  
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?66d3f22c203a48a65266b70229331a3a";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+  <div class="container one-column page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-next-logo"></i>
+      </span>
+      <span class="site-title">Riemann.Gan</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu ">
+      
+        
+        <li class="menu-item menu-item-所有文章">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-next-所有文章"></i> <br>
+            所有文章
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-虚拟化">
+          <a href="/tags/virtualization" rel="section">
+            <i class="menu-item-icon icon-next-虚拟化"></i> <br>
+            虚拟化
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-前端">
+          <a href="/tags/frontend" rel="section">
+            <i class="menu-item-icon icon-next-前端"></i> <br>
+            前端
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-服务端">
+          <a href="/tags/server" rel="section">
+            <i class="menu-item-icon icon-next-服务端"></i> <br>
+            服务端
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-关于我">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-next-关于我"></i> <br>
+            关于我
+          </a>
+        </li>
+      
+
+      
+      
+    </ul>
+  
+
+  
+</nav>
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div id="content" class="content"> 
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              在xen中配置网桥
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          Posted on
+          <time itemprop="dateCreated" datetime="2015-07-01T19:05:13+08:00" content="2015-07-01">
+            2015-07-01
+          </time>
+        </span>
+
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/07/01/config-net-bridge-in-xen/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/07/01/config-net-bridge-in-xen/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>本文记录如何使用网桥，将xen的虚拟机与物理机联通起来。</p>
+<a id="more"></a>
+<h1 id="删除virbr0"><a href="#删除virbr0" class="headerlink" title="删除virbr0"></a>删除virbr0</h1><p>一般情况下，虚拟机与物理机之间的网络连接有Bridgr桥接模式，NAT网络地址转换模式，和路由Route模式。此处我们使用网桥模式，是虚拟机与宿主机共用同一个物理网卡。</p>
+<p>在配置之前，先使用<code>ifconfig</code>和<code>brctl show</code>分别查看一下系统当前的网桥配置情况。两个命令都看到当前系统存在一个名称为<code>virbr0</code>的虚拟网卡。这里一篇博客（<a href="http://www.vpsee.com/2012/09/howto-disable-virbr0/）介绍，这个是libvirt为系统创建的虚拟网卡。libvirt默认使用NAT的模式，这不是我们想要的。" target="_blank" rel="noopener">http://www.vpsee.com/2012/09/howto-disable-virbr0/）介绍，这个是libvirt为系统创建的虚拟网卡。libvirt默认使用NAT的模式，这不是我们想要的。</a></p>
+<p>第一步先删除系统中的virbr0网卡。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">virsh net-list</span><br><span class="line">Name                 State      Autostart</span><br><span class="line">-----------------------------------------</span><br><span class="line">default              active     yes</span><br><span class="line"></span><br><span class="line">virsh net-destroy default</span><br><span class="line">Network default destroyed</span><br><span class="line"></span><br><span class="line">virsh net-undefine default</span><br><span class="line">Network default has been undefined</span><br><span class="line"></span><br><span class="line">service libvirtd restart</span><br><span class="line">Stopping libvirtd daemon:                                  [  OK  ]</span><br><span class="line">Starting libvirtd daemon:                                  [  OK  ]</span><br></pre></td></tr></table></figure></p>
+<p>然后在使用<code>ifconfig</code>就可以看到系统中已经没有virbr0这个网卡了。</p>
+<h1 id="配置xen的网桥设置"><a href="#配置xen的网桥设置" class="headerlink" title="配置xen的网桥设置"></a>配置xen的网桥设置</h1><p>创建虚拟机的时候，xen默认使用的方式就是网桥模式。首先确保xen的配置文件中开启了网桥模式。打开文件<code>/etc/xen/xend-config.sxp</code>。里面可能会有如下的内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">(network-script network-bridge)</span><br><span class="line">(vif-script vif-bridge)</span><br><span class="line"># (network-script network-route)</span><br><span class="line"># (vif-script vif-route)</span><br><span class="line"># (network-script network-nat)</span><br><span class="line"># (vif-script vif-nat)</span><br></pre></td></tr></table></figure></p>
+<p>如上面所示，将bridge的注释取消。保存修改，然后重启xen的相关服务：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">/etc/xen/scripts/network-bridge restart</span><br><span class="line">service xend restart</span><br><span class="line"># 是在不行还可以reboot</span><br></pre></td></tr></table></figure></p>
+<p>上面的操作会重启xen的网络服务，首先，xen会默认检测宿主服务器的默认网卡（可能是通过默认网关确定）eth0，把eth0的配置复制一份成为veth0，随后把eth0重命名为peth0，把veth0重命名为eth0。<br>使用<code>ifconfig</code>命令可以看到一个eth0虚拟网卡和物理网卡peth0。使用<code>brctl show</code>可以看到一个名为eth0的网桥。</p>
+<p>然而这样的名称具有一些误导性，不过可以自己修改配置指定网桥的名称，编辑<code>/etc/xeb/xend-config.sxp</code>文件，修改下面的内容:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># (network-script network-bridge)  </span><br><span class="line"># 修改为</span><br><span class="line">(network-script &apos;network-bridge bridge=br0&apos;)</span><br></pre></td></tr></table></figure></p>
+<p>重复上面重启服务的操作。</p>
+<h1 id="修改虚拟机启动配置文件"><a href="#修改虚拟机启动配置文件" class="headerlink" title="修改虚拟机启动配置文件"></a>修改虚拟机启动配置文件</h1><p>修改虚拟机启动的时候的配置文件，在其中增加网卡的信息：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ip = &quot;192.168.226.220&quot;</span><br><span class="line">netmask = &quot;255.255.255.0&quot;</span><br><span class="line">gateway = &quot;192.168.226.218&quot;</span><br></pre></td></tr></table></figure></p>
+<p>读者应根据自己的局域网的情况修改。重新创建虚拟机后，先使用console模式进入虚拟机，查看网络配置情况：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">[root@vm1 ~]# ifconfig</span><br><span class="line">eth0      Link encap:Ethernet  HWaddr 00:16:3E:36:98:A7  </span><br><span class="line">          inet addr:192.168.226.200  Bcast:192.168.226.255  Mask:255.255.255.0</span><br><span class="line">          inet6 addr: fe80::216:3eff:fe36:98a7/64 Scope:Link</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          RX packets:45623 errors:0 dropped:4312 overruns:0 frame:0</span><br><span class="line">          TX packets:450 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:1000</span><br><span class="line">          RX bytes:2659402 (2.5 MiB)  TX bytes:28789 (28.1 KiB)</span><br><span class="line">          Interrupt:39</span><br><span class="line"></span><br><span class="line">lo        Link encap:Local Loopback  </span><br><span class="line">          inet addr:127.0.0.1  Mask:255.0.0.0</span><br><span class="line">          inet6 addr: ::1/128 Scope:Host</span><br><span class="line">          UP LOOPBACK RUNNING  MTU:16436  Metric:1</span><br><span class="line">          RX packets:6 errors:0 dropped:0 overruns:0 frame:0</span><br><span class="line">          TX packets:6 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:0</span><br><span class="line">          RX bytes:828 (828.0 b)  TX bytes:828 (828.0 b)</span><br></pre></td></tr></table></figure></p>
+<p>在虚拟机中ping宿主机的IP，正常情况下是能ping通了的（可能需要一点时间等待arp更新）。<br>我们在物理机中使用<code>brctl show</code>查看一下网桥情况：<br><img src="/img/xen-br0.jpg" alt="xen网桥信息"></p>
+<h1 id="添加外网访问"><a href="#添加外网访问" class="headerlink" title="添加外网访问"></a>添加外网访问</h1><p>上面的网桥设置过程让虚拟机可以共用宿主机的物理网卡，配置正确后虚拟机中应该能够访问同一个局域网中的其他机器，以及虚拟机。但是这里面，宿主机配置的是内网的IP，本身不具备上外网的功能。笔者另外在同一局域网中一台可以连接外网的机器上配置了iptables网络地址转换，才使得内网的机器能够上网。网关机器的设置另外讨论，局域网中需要连接外网的机器，使用route命令来添加路由规则即可。<br>为了让虚拟机能够访问外网，在虚拟机中使用如下命令：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">route add default gw 192.168.226.218    <span class="comment"># 此IP是我用来转发到外网的机器，笔者改成自己对应的IP即可。</span></span><br><span class="line">ping 8.8.8.8</span><br></pre></td></tr></table></figure></p>
+<p><strong>参考资料：</strong><br><a href="http://luozhaoyu.iteye.com/blog/1404504" target="_blank" rel="noopener">http://luozhaoyu.iteye.com/blog/1404504</a><br><a href="http://www.cnblogs.com/yangyh/archive/2010/07/16/1778516.html" target="_blank" rel="noopener">http://www.cnblogs.com/yangyh/archive/2010/07/16/1778516.html</a><br><a href="http://blog.sina.com.cn/s/blog_704836f40100rzzs.html" target="_blank" rel="noopener">http://blog.sina.com.cn/s/blog_704836f40100rzzs.html</a></p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/virtualization/" rel="tag">#virtualization</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/07/08/xen-hotplug-scripts-not-working/" rel="prev">xen提示hotplug scripts not working错误</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/06/30/install-xen-virtual-machine/" rel="next">安装Xen与创建虚拟机</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+ </div>
+
+        
+
+        
+          <div class="comments" id="comments">
+            
+              <div class="ds-thread" data-thread-key="2015/07/01/config-net-bridge-in-xen/" data-title="在xen中配置网桥" data-url="http://www.fatalfault.com/2015/07/01/config-net-bridge-in-xen/">
+              </div>
+            
+          </div>
+        
+      </div>
+
+      
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table Of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/img/avatar.jpg" alt="Riemann.Gan" itemprop="image">
+          <p class="site-author-name" itemprop="name">Riemann.Gan</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">不学无术，以缺德服人:)</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/">
+              <span class="site-state-item-count">24</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            
+              <span class="site-state-item-count">3</span>
+              <span class="site-state-item-name">categories</span>
+              
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            
+              <span class="site-state-item-count">13</span>
+              <span class="site-state-item-name">tags</span>
+              
+          </div>
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+            <p class="site-author-name">友情链接</p>
+            
+              <span class="links-of-author-item">
+              <a href="http://zzwei-.github.io/" target="_blank">小伟的博客</a>
+              </span>
+            
+              <span class="links-of-author-item">
+              <a href="http://www.cnblogs.com/zx247549135/" target="_blank">大雄的博客</a>
+              </span>
+            
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#删除virbr0"><span class="nav-number">1.</span> <span class="nav-text">删除virbr0</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#配置xen的网桥设置"><span class="nav-number">2.</span> <span class="nav-text">配置xen的网桥设置</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#修改虚拟机启动配置文件"><span class="nav-number">3.</span> <span class="nav-text">修改虚拟机启动配置文件</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#添加外网访问"><span class="nav-number">4.</span> <span class="nav-text">添加外网访问</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner"> <div class="copyright">
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="icon-next-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Riemann.Gan</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="http://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+ </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+  </div>
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"fatalfault"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.5.1"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.5.1"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.5.1" id="motion.global"></script>
+
+
+
+
+  <script type="text/javascript" src="/js/nav-toggle.js?v=0.4.5.1"></script>
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.5.1" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+  <script type="text/javascript">
+    $(document).ready(function () {
+      if (CONFIG.sidebar === 'always') {
+        displaySidebar();
+      }
+      if (isMobile()) {
+        FastClick.attach(document.body);
+      }
+    });
+  </script>
+
+  
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/lazyload.js"></script>
+  <script type="text/javascript">
+    $(function () {
+      $("#posts").find('img').lazyload({
+        placeholder: "/images/loading.gif",
+        effect: "fadeIn"
+      });
+    });
+  </script>
+</body>
+</html>

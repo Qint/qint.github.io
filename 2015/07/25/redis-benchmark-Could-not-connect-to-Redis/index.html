@@ -1,0 +1,667 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head><meta name="generator" content="Hexo 3.9.0">
+  
+
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5">
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.5.1">
+
+
+    <meta name="description" content="不学无术，以缺德服人:)">
+
+
+
+  <meta name="keywords" content="server,">
+
+
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/img/favicon.png?v=0.4.5.1">
+
+
+<meta name="description" content="为了做实验，需要在虚拟机中安装redis并使用redis-benchmark测试性能。 但是在使用redis-benchmark模拟2000个客户端的请求的时候，出现了Could not connect to Redis at localhost:10081: Name or service not known的问题。">
+<meta name="keywords" content="server">
+<meta property="og:type" content="article">
+<meta property="og:title" content="redis-benchmark Could not connect to Redis问题">
+<meta property="og:url" content="http://www.fatalfault.com/2015/07/25/redis-benchmark-Could-not-connect-to-Redis/index.html">
+<meta property="og:site_name" content="Riemann.Gan">
+<meta property="og:description" content="为了做实验，需要在虚拟机中安装redis并使用redis-benchmark测试性能。 但是在使用redis-benchmark模拟2000个客户端的请求的时候，出现了Could not connect to Redis at localhost:10081: Name or service not known的问题。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:updated_time" content="2019-05-01T09:33:35.160Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="redis-benchmark Could not connect to Redis问题">
+<meta name="twitter:description" content="为了做实验，需要在虚拟机中安装redis并使用redis-benchmark测试性能。 但是在使用redis-benchmark模拟2000个客户端的请求的时候，出现了Could not connect to Redis at localhost:10081: Name or service not known的问题。">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'always'
+  };
+</script>
+
+  <title> redis-benchmark Could not connect to Redis问题 | Riemann.Gan </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh_CN">
+
+  <!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+  
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?66d3f22c203a48a65266b70229331a3a";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+  <div class="container one-column page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-next-logo"></i>
+      </span>
+      <span class="site-title">Riemann.Gan</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu ">
+      
+        
+        <li class="menu-item menu-item-所有文章">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-next-所有文章"></i> <br>
+            所有文章
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-虚拟化">
+          <a href="/tags/virtualization" rel="section">
+            <i class="menu-item-icon icon-next-虚拟化"></i> <br>
+            虚拟化
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-前端">
+          <a href="/tags/frontend" rel="section">
+            <i class="menu-item-icon icon-next-前端"></i> <br>
+            前端
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-服务端">
+          <a href="/tags/server" rel="section">
+            <i class="menu-item-icon icon-next-服务端"></i> <br>
+            服务端
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-关于我">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-next-关于我"></i> <br>
+            关于我
+          </a>
+        </li>
+      
+
+      
+      
+    </ul>
+  
+
+  
+</nav>
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div id="content" class="content"> 
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              redis-benchmark Could not connect to Redis问题
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          Posted on
+          <time itemprop="dateCreated" datetime="2015-07-25T16:11:27+08:00" content="2015-07-25">
+            2015-07-25
+          </time>
+        </span>
+
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/07/25/redis-benchmark-Could-not-connect-to-Redis/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/07/25/redis-benchmark-Could-not-connect-to-Redis/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>为了做实验，需要在虚拟机中安装redis并使用redis-benchmark测试性能。 但是在使用<code>redis-benchmark</code>模拟2000个客户端的请求的时候，出现了<strong>Could not connect to Redis at localhost:10081: Name or service not known</strong>的问题。</p>
+<a id="more"></a>
+<p>执行<code>redis-benchmark</code>的命令是<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">redis-server ./server-0.conf		<span class="comment"># 启动redis-server，监听的端口是10081端口</span></span><br><span class="line">redis-benchmark -h localhost -p 10081 -c 2000 -n 200000000 -q -t get -P 8</span><br></pre></td></tr></table></figure></p>
+<p>提示的错误信息是<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Could not connect to Redis at localhost:10081: Name or service not known</span><br></pre></td></tr></table></figure></p>
+<p>首先可以确定，redis-server确实是运行在10081端口的。经过一番修改参数，将-c的参数反复修改后发现，-c的值为1020的时候刚好可以运行redis-benchmark，再增大一点，就会报上面的错。</p>
+<p><strong>猜测一：</strong><br>首先，我猜测可能是配置中限制了最大客户端连接数。但是检查配置文件，发现设置的值为10000，远比1020大。并且第二次启动redis-server的时候，我有在命令的参数中增加了<code>--maxclients 20000</code>的参数。但是依然不行。</p>
+<p><strong>猜测二：</strong><br>系统限制了进程能够使用的资源数量，比如进程能够创建的子线程数、进程能够打开的文件句柄数、进程能够创建的socket连接数等，参数设置的值超过了系统的限制值（事实证明就是这个原因）。</p>
+<p>参考了<a href="http://blog.csdn.net/guowake/article/details/6615728" target="_blank" rel="noopener">Linux下高并发socket最大连接数所受的各种限制</a>中关于linux下进程对于硬资源和软资源的限制的相关说明。</p>
+<p>总的来说，linux下对系统进程能够打开的文件数目、线程数目和socket数目都有限制。linux中使用<code>ulimit</code>命令可以进行查看和修改。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@vm1 redis]# ulimit -n</span><br><span class="line">1024</span><br></pre></td></tr></table></figure></p>
+<p>上面的命令可以看到，系统限制的可打开最大文件数是1024，之前测试的结果显示，redis-benchmark可发起的最大请求是1020，正好比系统默认的1024小一点。</p>
+<p>如果只是临时修改系统的配置，可以使用下面的命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ulimit -SHn 20480</span><br></pre></td></tr></table></figure></p>
+<p>尝试将系统的限制最大文件数目修改为更大一些。</p>
+<ol>
+<li><p>修改<code>/etc/security/limits.conf</code>文件，添加如下两行：</p>
+<ul>
+<li>soft nofile 20480</li>
+<li>soft nofile 20480</li>
+</ul>
+</li>
+<li><p>修改<code>/etc/pam.d/login</code>文件，添加线面一行：<br> session required /lib/security/pam_limits.so</p>
+</li>
+</ol>
+<p>修改完成后，重启系统。上面的修改中，第一步的意思是，针对每一个用户，都将可打开的文件数目修改为20480；第二歩的操作使得系统在每次用户登录的时候，都去调用<code>/lib/security/pam_limits.so</code>这个库文件，这个库文件会读取第一步中的设置，使设置生效。</p>
+<p>再来看看系统当前对进程可打开文件数目的限制情况：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@vm1 redis]# ulimit -n</span><br><span class="line">20480</span><br></pre></td></tr></table></figure></p>
+<p>再执行前面的benchmark命令就正常了，但是在将并发的客户端数目增大到6000的时候，还是会出现不稳定的现象，<code>/var/log/message</code>文件中出现了下面的日志：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vm2 kernel: TCP: Possible SYN flooding on port 10083. Sending cookies.  Check SNMP counters.</span><br></pre></td></tr></table></figure></p>
+<p>并且执行的命令会意外中断。猜测应该是系统的TCP连接数受限制了。</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/server/" rel="tag">#server</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/10/15/crontab中大量ssh导致机器卡顿问题/" rel="prev">crontab中大量ssh导致机器卡顿问题</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/07/08/tuning-xen-performance/" rel="next">Xen性能调优</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+ </div>
+
+        
+
+        
+          <div class="comments" id="comments">
+            
+              <div class="ds-thread" data-thread-key="2015/07/25/redis-benchmark-Could-not-connect-to-Redis/" data-title="redis-benchmark Could not connect to Redis问题" data-url="http://www.fatalfault.com/2015/07/25/redis-benchmark-Could-not-connect-to-Redis/">
+              </div>
+            
+          </div>
+        
+      </div>
+
+      
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table Of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/img/avatar.jpg" alt="Riemann.Gan" itemprop="image">
+          <p class="site-author-name" itemprop="name">Riemann.Gan</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">不学无术，以缺德服人:)</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/">
+              <span class="site-state-item-count">24</span>
+              <span class="site-state-item-name">posts</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            
+              <span class="site-state-item-count">3</span>
+              <span class="site-state-item-name">categories</span>
+              
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            
+              <span class="site-state-item-count">13</span>
+              <span class="site-state-item-name">tags</span>
+              
+          </div>
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+            <p class="site-author-name">友情链接</p>
+            
+              <span class="links-of-author-item">
+              <a href="http://zzwei-.github.io/" target="_blank">小伟的博客</a>
+              </span>
+            
+              <span class="links-of-author-item">
+              <a href="http://www.cnblogs.com/zx247549135/" target="_blank">大雄的博客</a>
+              </span>
+            
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <p class="post-toc-empty">This post does not have a Table Of Contents</p>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner"> <div class="copyright">
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="icon-next-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Riemann.Gan</span>
+</div>
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="http://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+ </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+  </div>
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"fatalfault"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.5.1"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.5.1"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.5.1" id="motion.global"></script>
+
+
+
+
+  <script type="text/javascript" src="/js/nav-toggle.js?v=0.4.5.1"></script>
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.5.1" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+  <script type="text/javascript">
+    $(document).ready(function () {
+      if (CONFIG.sidebar === 'always') {
+        displaySidebar();
+      }
+      if (isMobile()) {
+        FastClick.attach(document.body);
+      }
+    });
+  </script>
+
+  
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/lazyload.js"></script>
+  <script type="text/javascript">
+    $(function () {
+      $("#posts").find('img').lazyload({
+        placeholder: "/images/loading.gif",
+        effect: "fadeIn"
+      });
+    });
+  </script>
+</body>
+</html>
