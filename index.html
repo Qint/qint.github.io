@@ -187,7 +187,7 @@
           
             
               <a class="post-title-link" href="/2016/01/20/kernel-debug-with-serial-cable/" itemprop="url">
-                使用串口线登陆调试linux内核
+                使用串口线调试另一台服务器上的linux/Xen内核
               </a>
             
           
@@ -224,8 +224,8 @@
 
       
         
-          <span itemprop="articleBody"><p>因为修改xen hypervisor源码，导致了一个运行时的内存错误。使用printk追踪错误原因，但是每次启动的时候，输出的内容都一闪而过，无法</p>
-<p>这个坑先留着，有空了再填。</p>
+          <span itemprop="articleBody"><p>在做linux kernel或者xen hypervisor源码修改的时候，经常会因为一个运行时错误、导致内核宕机，或者根本启动不起来，在一直在自动重启中死循环。以前总是需要跑去机房，在服务器启动到选择内核版本的时候，选择一个正常可用的内核，来启动服务器。</p>
+<p>但其实，一种更省事的方式是，用一根串口线将Server1、Server2两台服务器连接起来，将Server1上的BIOS输出、内核输出，都定向到串口上，然后使用ssh登录到Server2上，使用串口工具连接到Server1，即可通过Server2来控制Server1上的启动、选择内核版本、还可以看到Server1上内核的输出信息；</p>
 </span>
         
       
